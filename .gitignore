@@ -1,0 +1,35 @@
+# Build output and temporary directories
+target/
+*.class
+
+# Secrets and environment configurations
+.env
+.env.*
+*.secret
+*.pem
+*.key
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE and Editor configurations
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Test reports & dumps
+surefire-reports/
+*.dump
+*.dumpstream
+playwright-report/
+test-results/
