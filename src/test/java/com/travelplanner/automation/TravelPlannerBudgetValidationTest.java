@@ -1,12 +1,11 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,44 +15,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Ensures an advisory warning appears when the entered budget is below the
  * destination's minimum estimated cost, and disappears once an adequate budget is supplied.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerBudgetValidationTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("Budget Validation: Low budget displays advisory warning, sufficient budget hides it")
-    void shouldDisplayWarningForLowBudgetAndHideWhenBudgetSufficient() {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
+    void shouldDisplayWarningForLowBudgetAndHideWhenBudgetSufficient(Page page) {
+        // 1. Navigate to home page
+        page.navigate(APP_URL);
 
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
+        Locator destinationInput = page.locator("#destination");
+        Locator budgetInput = page.locator("#budgetInput");
+        Locator budgetWarning = page.locator("#budgetWarning");
 
-                // 1. Navigate to home page
-                page.navigate(APP_URL);
+        // Test A: Low budget displays warning
+        destinationInput.fill("Paris");
+        budgetInput.fill("5000");
+        budgetInput.blur();
 
-                Locator destinationInput = page.locator("#destination");
-                Locator budgetInput = page.locator("#budgetInput");
-                Locator budgetWarning = page.locator("#budgetWarning");
+        assertTrue(budgetWarning.isVisible(),
+                "Budget warning should be visible when budget is below heuristic threshold for Paris");
+        assertTrue(budgetWarning.textContent().contains("Trips to Paris generally start around ₹80,000"),
+                "Budget warning should advise that trips to Paris generally start around ₹80,000");
 
-                // Test A: Low budget displays warning
-                destinationInput.fill("Paris");
-                budgetInput.fill("5000");
-                budgetInput.blur();
+        // Test B: Sufficient budget hides warning
+        budgetInput.fill("85000");
+        budgetInput.blur();
 
-                assertTrue(budgetWarning.isVisible(),
-                        "Budget warning should be visible when budget is below heuristic threshold for Paris");
-                assertTrue(budgetWarning.textContent().contains("Trips to Paris generally start around ₹80,000"),
-                        "Budget warning should advise that trips to Paris generally start around ₹80,000");
-
-                // Test B: Sufficient budget hides warning
-                budgetInput.fill("85000");
-                budgetInput.blur();
-
-                assertFalse(budgetWarning.isVisible(),
-                        "Budget warning should be hidden when budget is increased to ₹85,000");
-            }
-        }
+        assertFalse(budgetWarning.isVisible(),
+                "Budget warning should be hidden when budget is increased to ₹85,000");
     }
 }

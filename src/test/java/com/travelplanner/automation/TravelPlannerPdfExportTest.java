@@ -1,13 +1,12 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Download;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -31,22 +30,16 @@ import static org.junit.jupiter.api.Assertions.*;
  *   - Operates purely in-browser on deterministic pre-seeded sessionStorage data.
  *   - Original application files are not modified.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerPdfExportTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("PDF Export: Clicking export button generates and downloads non-empty PDF report")
-    void shouldExportItineraryAsPdfDownload() throws IOException {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
-
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
-
-                // 1. Establish the origin and seed sessionStorage with valid travel data
-                page.navigate(APP_URL);
+    void shouldExportItineraryAsPdfDownload(Page page) throws IOException {
+        // 1. Establish the origin and seed sessionStorage with valid travel data
+        page.navigate(APP_URL);
 
                 String sampleTravelDataJson = """
                         {
@@ -109,7 +102,5 @@ public class TravelPlannerPdfExportTest {
                 assertTrue(successNotification.isVisible(), "Success notification should be visible after export");
                 assertTrue(successNotification.textContent().contains("Professional Report exported successfully!"),
                         "Notification text should confirm successful export");
-            }
-        }
     }
 }

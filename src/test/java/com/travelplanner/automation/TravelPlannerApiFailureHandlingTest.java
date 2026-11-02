@@ -1,14 +1,13 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.WaitForSelectorState;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,22 +27,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   - Network requests to /api/plan are intercepted and mocked with HTTP 500.
  *   - Original application files are not modified.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerApiFailureHandlingTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("API Failure: HTTP 500 error shows error notification, restores form, and enables Plan button")
-    void shouldHandleApi500ErrorGracefully() {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
-
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
-
-                // 1. Open the home page
-                page.navigate(APP_URL);
+    void shouldHandleApi500ErrorGracefully(Page page) {
+        // 1. Open the home page
+        page.navigate(APP_URL);
 
                 // 2. Register route handler for **/api/plan to return HTTP 500 before submitting
                 page.route("**/api/plan", route -> {
@@ -106,7 +99,5 @@ public class TravelPlannerApiFailureHandlingTest {
                         "Browser URL should not navigate to itinerary.html on API failure");
                 assertTrue(page.url().contains("8081"),
                         "Browser should remain on the home page URL");
-            }
-        }
     }
 }

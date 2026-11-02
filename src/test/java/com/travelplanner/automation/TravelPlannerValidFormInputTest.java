@@ -1,12 +1,11 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,22 +25,16 @@ import static org.junit.jupiter.api.Assertions.*;
  *   - No assertions on generated itineraries or API responses.
  *   - All interactions and assertions are strictly confined to the client DOM.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerValidFormInputTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("Valid Form Input: Form inputs are accepted, validated, and synchronized without submitting")
-    void validTravelFormInputIsAcceptedAndSynchronized() {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
-
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
-
-                // 1. Navigate to application home page
-                page.navigate(APP_URL);
+    void validTravelFormInputIsAcceptedAndSynchronized(Page page) {
+        // 1. Navigate to application home page
+        page.navigate(APP_URL);
 
                 // Define locators for form fields and UI feedback elements
                 Locator flyingFrom = page.locator("#flyingFrom");
@@ -158,7 +151,5 @@ public class TravelPlannerValidFormInputTest {
                 // 26. Assert #planBtn is enabled
                 assertTrue(planBtn.isEnabled(),
                         "Plan button (#planBtn) should be enabled");
-            }
-        }
     }
 }

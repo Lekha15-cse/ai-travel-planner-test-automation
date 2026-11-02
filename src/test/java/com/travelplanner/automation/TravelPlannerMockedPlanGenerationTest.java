@@ -1,13 +1,12 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.Route;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,22 +23,16 @@ import static org.junit.jupiter.api.Assertions.*;
  * Then verifies proper navigation to /itinerary.html and checks that the dashboard
  * rendered the mocked data successfully.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerMockedPlanGenerationTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("Mocked Plan Generation: Intercepts POST /api/plan, returns mock itinerary, and verifies dashboard navigation")
-    void shouldGeneratePlanWithMockedApiResponseAndNavigateToItinerary() {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
-
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
-
-                // 1. Navigate to the application home page
-                page.navigate(APP_URL);
+    void shouldGeneratePlanWithMockedApiResponseAndNavigateToItinerary(Page page) {
+        // 1. Navigate to the application home page
+        page.navigate(APP_URL);
 
                 // Tracking objects to verify route interception details
                 AtomicBoolean routeIntercepted = new AtomicBoolean(false);
@@ -120,7 +113,5 @@ public class TravelPlannerMockedPlanGenerationTest {
 
                 Locator exportBtn = page.locator("#exportPdfBtn");
                 assertTrue(exportBtn.isVisible(), "Export PDF button should be visible on the loaded itinerary page");
-            }
-        }
     }
 }

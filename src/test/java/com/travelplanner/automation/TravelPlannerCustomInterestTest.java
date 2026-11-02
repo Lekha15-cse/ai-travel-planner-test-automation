@@ -1,12 +1,11 @@
 package com.travelplanner.automation;
 
-import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
+import com.travelplanner.automation.extensions.ScreenshotOnFailureExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,50 +25,42 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   - No network calls (/api/plan, Groq, wttr.in).
  *   - No modifications to the original application or other tests.
  */
+@ExtendWith(ScreenshotOnFailureExtension.class)
 public class TravelPlannerCustomInterestTest {
 
     private static final String APP_URL = "http://localhost:8081/";
 
     @Test
     @DisplayName("Custom Interest: Dynamic chip is added and synchronized via #customInterest Enter keypress")
-    void customInterestIsAddedAndSynchronized() {
-        try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(true);
+    void customInterestIsAddedAndSynchronized(Page page) {
+        // 1. Navigate to home page
+        page.navigate(APP_URL);
 
-            try (Browser browser = playwright.chromium().launch(launchOptions);
-                 Page page = browser.newPage()) {
+        // 2. Locate the custom-interest input field
+        Locator customInterestInput = page.locator("#customInterest");
+        assertTrue(customInterestInput.isVisible(), "Custom interest input (#customInterest) should be visible");
 
-                // 1. Navigate to home page
-                page.navigate(APP_URL);
+        // 3. Enter 'Photography' into the custom interest input
+        customInterestInput.fill("Photography");
 
-                // 2. Locate the custom-interest input field
-                Locator customInterestInput = page.locator("#customInterest");
-                assertTrue(customInterestInput.isVisible(), "Custom interest input (#customInterest) should be visible");
+        // 4. Trigger the custom interest addition via Enter keypress
+        customInterestInput.press("Enter");
 
-                // 3. Enter 'Photography' into the custom interest input
-                customInterestInput.fill("Photography");
+        // 5. Locate the newly created chip button inside #interestsContainer
+        Locator newChip = page.locator("#interestsContainer button.chip")
+                .filter(new Locator.FilterOptions().setHasText("Photography"));
 
-                // 4. Trigger the custom interest addition via Enter keypress
-                customInterestInput.press("Enter");
+        // 6. Verify that the newly created chip is visible and selected ('active' class)
+        assertTrue(newChip.isVisible(), "Newly created 'Photography' chip should be visible in #interestsContainer");
 
-                // 5. Locate the newly created chip button inside #interestsContainer
-                Locator newChip = page.locator("#interestsContainer button.chip")
-                        .filter(new Locator.FilterOptions().setHasText("Photography"));
+        String chipClass = newChip.getAttribute("class");
+        assertNotNull(chipClass, "New chip should have a class attribute");
+        assertTrue(chipClass.contains("active"), "New 'Photography' chip should have the 'active' class");
 
-                // 6. Verify that the newly created chip is visible and selected ('active' class)
-                assertTrue(newChip.isVisible(), "Newly created 'Photography' chip should be visible in #interestsContainer");
-
-                String chipClass = newChip.getAttribute("class");
-                assertNotNull(chipClass, "New chip should have a class attribute");
-                assertTrue(chipClass.contains("active"), "New 'Photography' chip should have the 'active' class");
-
-                // 7. Verify that the hidden #interests input contains 'Photography'
-                Locator hiddenInterests = page.locator("#interests");
-                String interestsValue = hiddenInterests.inputValue();
-                assertTrue(interestsValue.contains("Photography"),
-                        "Hidden #interests input value should contain 'Photography', actual value: " + interestsValue);
-            }
-        }
+        // 7. Verify that the hidden #interests input contains 'Photography'
+        Locator hiddenInterests = page.locator("#interests");
+        String interestsValue = hiddenInterests.inputValue();
+        assertTrue(interestsValue.contains("Photography"),
+                "Hidden #interests input value should contain 'Photography', actual value: " + interestsValue);
     }
 }
